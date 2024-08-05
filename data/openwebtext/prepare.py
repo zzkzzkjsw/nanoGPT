@@ -20,10 +20,19 @@ enc = tiktoken.get_encoding("gpt2")
 
 if __name__ == '__main__':
     # takes 54GB in huggingface .cache dir, about 8M documents (8,013,769)
-    dataset = load_dataset("openwebtext", num_proc=num_proc_load_dataset)
+    dataset = load_dataset('text', data_files='/home/zhaozk6/openwebtext/*.xz', split='train')
+
+    def remove_empty_strings(example):
+        # 检查是否存在空字符串
+        if example['text']=='' or '\x00\x00' in example['text']:
+            return False  # 返回 None 表示过滤掉该行
+        return True
+
+    # 应用处理函数，并过滤数据集
+    processed_dataset = dataset.filter(remove_empty_strings)
 
     # owt by default only contains the 'train' split, so create a test split
-    split_dataset = dataset["train"].train_test_split(test_size=0.0005, seed=2357, shuffle=True)
+    split_dataset = dataset.train_test_split(test_size=0.0005, seed=2357, shuffle=True)
     split_dataset['val'] = split_dataset.pop('test') # rename the test split to val
 
     # this results in:
